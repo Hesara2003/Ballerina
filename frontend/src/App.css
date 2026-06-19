@@ -13,8 +13,9 @@ body {
 .container {
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   min-height: 100vh;
+  padding: 2rem;
 }
 
 .card {
@@ -26,53 +27,74 @@ body {
   min-width: 320px;
 }
 
-h1 {
-  font-size: 1.8rem;
-  color: #1a1a2e;
-  margin-bottom: 0.75rem;
+.card.wide {
+  width: 100%;
+  max-width: 640px;
+  text-align: left;
 }
 
-p {
-  color: #666;
-  margin-bottom: 1.5rem;
+.user-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
-.user-info {
-  color: #333;
+h1 { font-size: 1.6rem; color: #1a1a2e; margin-bottom: 0.25rem; }
+h2 { font-size: 1.1rem; color: #333; margin-bottom: 0.75rem; }
+
+hr { border: none; border-top: 1px solid #eee; margin: 1.25rem 0; }
+
+section { margin-bottom: 0.5rem; }
+
+p { color: #666; }
+.user-info { color: #555; font-size: 0.9rem; }
+.loading { color: #888; font-size: 1.1rem; text-align: center; }
+
+.form-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
   margin-bottom: 0.5rem;
 }
 
-.loading {
-  color: #888;
-  font-size: 1.1rem;
+input {
+  flex: 1;
+  min-width: 80px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.9rem;
 }
+
+input:focus { outline: none; border-color: #ff7300; }
 
 .btn {
-  display: inline-block;
-  padding: 0.75rem 2rem;
+  padding: 0.5rem 1.25rem;
   border: none;
-  border-radius: 8px;
-  font-size: 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
-  margin-top: 1rem;
+  white-space: nowrap;
 }
 
-.btn-signin {
-  background: #ff7300;
-  color: white;
-}
+.btn-signin  { background: #ff7300; color: white; padding: 0.75rem 2rem; margin-top: 1rem; }
+.btn-signin:hover  { background: #e56500; }
+.btn-signout { background: #e53e3e; color: white; }
+.btn-signout:hover { background: #c53030; }
+.btn-action  { background: #3182ce; color: white; }
+.btn-action:hover  { background: #2b6cb0; }
+.btn-delete  { background: #e53e3e; color: white; }
+.btn-delete:hover  { background: #c53030; }
 
-.btn-signin:hover {
-  background: #e56500;
-}
-
-.btn-signout {
-  background: #e53e3e;
-  color: white;
-}
-
-.btn-signout:hover {
-  background: #c53030;
+.response {
+  margin-top: 1.25rem;
+  background: #1a1a2e;
+  color: #a8ff78;
+  padding: 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
 }
