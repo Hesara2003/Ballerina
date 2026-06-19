@@ -6,7 +6,7 @@ import App from "./App";
 const config = {
     signInRedirectURL: "http://localhost:5173",
     signOutRedirectURL: "http://localhost:5173",
-    clientID: "HIecORXuQktt0tsWmdc9xZYQt3Ia",
+    clientID: "K6ADLrLse8ZokGQNxB5kQ0U9yiTk",
     baseUrl: "https://api.asgardeo.io/t/hesara",
     scope: ["openid", "profile"]
 };
