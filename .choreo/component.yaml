@@ -1,0 +1,8 @@
+schemaVersion: 1.0
+endpoints:
+  - name: users-api
+    port: 8080
+    type: REST
+    networkVisibility: Public
+    context: /users
+    schemaFilePath: openapi.yaml

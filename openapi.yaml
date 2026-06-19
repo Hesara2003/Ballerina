@@ -1,0 +1,88 @@
+openapi: "3.0.0"
+info:
+  title: Users API
+  version: "0.1.0"
+servers:
+  - url: http://localhost:8080/users
+paths:
+  /addUser:
+    post:
+      summary: Add a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+      responses:
+        "200":
+          description: User added successfully
+        "400":
+          description: Invalid payload
+  /getUser:
+    get:
+      summary: Get a user by ID
+      parameters:
+        - in: query
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User found
+        "404":
+          description: User not found
+  /deleteUser:
+    delete:
+      summary: Delete a user by ID
+      parameters:
+        - in: query
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User deleted
+        "404":
+          description: User not found
+  /updateUser:
+    put:
+      summary: Update an existing user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+      responses:
+        "200":
+          description: User updated successfully
+        "404":
+          description: User not found
+components:
+  schemas:
+    User:
+      type: object
+      required:
+        - id
+        - name
+        - age
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        age:
+          type: integer
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://api.asgardeo.io/t/<org-name>/oauth2/authorize
+          tokenUrl: https://api.asgardeo.io/t/<org-name>/oauth2/token
+          scopes: {}
+security:
+  - OAuth2: []
