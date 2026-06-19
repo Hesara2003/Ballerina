@@ -1,0 +1,78 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #f0f2f5;
+  min-height: 100vh;
+}
+
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 2.5rem;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  min-width: 320px;
+}
+
+h1 {
+  font-size: 1.8rem;
+  color: #1a1a2e;
+  margin-bottom: 0.75rem;
+}
+
+p {
+  color: #666;
+  margin-bottom: 1.5rem;
+}
+
+.user-info {
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.loading {
+  color: #888;
+  font-size: 1.1rem;
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.75rem 2rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 1rem;
+}
+
+.btn-signin {
+  background: #ff7300;
+  color: white;
+}
+
+.btn-signin:hover {
+  background: #e56500;
+}
+
+.btn-signout {
+  background: #e53e3e;
+  color: white;
+}
+
+.btn-signout:hover {
+  background: #c53030;
+}
