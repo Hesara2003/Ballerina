@@ -1,7 +1,8 @@
 schemaVersion: 1.0
 endpoints:
   - name: frontend
-    port: 5173
+    service:
+      port: 5173
     type: REST
     networkVisibility: Public
     context: /
