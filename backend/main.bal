@@ -1,5 +1,9 @@
 import ballerina/http;
 
+configurable string asgardeoOrg = "hesara";
+configurable string clientId = ?;
+configurable string clientSecret = ?;
+
 type User record {
     string name;
     int age;
@@ -8,16 +12,15 @@ type User record {
 
 map<int> userIds = {};
 
-// Replace <org-name> and <client-id> with your Asgardeo organization and app values.
 @http:ServiceConfig {
     auth: [
         {
             jwtValidatorConfig: {
-                issuer: "https://api.asgardeo.io/t/<org-name>/oauth2/token",
-                audience: "<your-client-id>",
+                issuer: string `https://api.asgardeo.io/t/${asgardeoOrg}/oauth2/token`,
+                audience: clientId,
                 signatureConfig: {
                     jwksConfig: {
-                        url: "https://api.asgardeo.io/t/<org-name>/oauth2/jwks"
+                        url: string `https://api.asgardeo.io/t/${asgardeoOrg}/oauth2/jwks`
                     }
                 }
             }
