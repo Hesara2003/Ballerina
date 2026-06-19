@@ -29,14 +29,14 @@ map<int> userIds = {};
 }
 service /users on new http:Listener(8080) {
     resource function post addUser(@http:Payload User user) returns http:Response {
-        userIds[user.id] = user.id;
+        userIds[user.id.toString()] = user.id;
         http:Response res = new;
         res.setPayload("User added successfully");
         return res;
     }
 
     resource function get getUser(int id) returns http:Response {
-        if userIds.hasKey(id) {
+        if userIds.hasKey(id.toString()) {
             http:Response res = new;
             res.setPayload("User found with ID: " + id.toString());
             return res;
@@ -48,8 +48,8 @@ service /users on new http:Listener(8080) {
     }
 
     resource function delete deleteUser(int id) returns http:Response {
-        if userIds.hasKey(id) {
-            userIds.remove(id);
+        if userIds.hasKey(id.toString()) {
+            _ = userIds.remove(id.toString());
             http:Response res = new;
             res.setPayload("User deleted with ID: " + id.toString());
             return res;
@@ -61,8 +61,8 @@ service /users on new http:Listener(8080) {
     }
 
     resource function put updateUser(@http:Payload User user) returns http:Response {
-        if userIds.hasKey(user.id) {
-            userIds[user.id] = user.id;
+        if userIds.hasKey(user.id.toString()) {
+            userIds[user.id.toString()] = user.id;
             http:Response res = new;
             res.setPayload("User updated successfully");
             return res;
