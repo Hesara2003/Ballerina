@@ -8,14 +8,41 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { motion } from "framer-motion";
-import { BookOpen, MapPin, Search, Settings, Users } from "lucide-react";
+import { ChevronDown, MapPin, Search } from "lucide-react";
 
 import BackgroundImage from "@assets/images/app-login-background.png";
 import { APP_NAME } from "@config/config";
 import { useAppAuthContext } from "@context/AuthContext";
 
 const NAV_LINKS = ["Users API", "Documentation", "Integrations", "About"];
+
+const OutlineHeroBtn = ({
+  children,
+  onClick,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+}) => (
+  <Button
+    onClick={onClick}
+    variant="outlined"
+    sx={{
+      color: "white",
+      borderColor: "white",
+      borderRadius: 0,
+      px: 3,
+      py: 1.2,
+      fontWeight: 600,
+      fontSize: "0.9rem",
+      textTransform: "none",
+      justifyContent: "flex-start",
+      minWidth: 230,
+      "&:hover": { bgcolor: "rgba(255,255,255,0.12)", borderColor: "white" },
+    }}
+  >
+    {children}
+  </Button>
+);
 
 const LoginScreen = () => {
   const { appSignIn, appSignOut } = useAppAuthContext();
@@ -26,47 +53,64 @@ const LoginScreen = () => {
   };
 
   return (
-    <Box sx={{ width: "100vw", height: "100vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-
-      {/* ── NAVBAR ─────────────────────────────────────────────── */}
+    <Box
+      sx={{
+        width: "100vw",
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
+      {/* ── NAVBAR ─────────────────────────────────── */}
       <Box
         component="nav"
         sx={{
-          position: "relative",
           zIndex: 10,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          px: { xs: 3, md: 6 },
-          py: 0,
-          height: 60,
+          px: { xs: 3, md: 5 },
+          height: 58,
           bgcolor: "white",
-          boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.12)",
+          flexShrink: 0,
         }}
       >
-        {/* Logo + Nav links */}
         <Stack direction="row" alignItems="center" spacing={4}>
           <Typography variant="h6" fontWeight={900} color="#c41230" letterSpacing={-0.5}>
             {APP_NAME}
           </Typography>
-          <Stack direction="row" spacing={3} sx={{ display: { xs: "none", md: "flex" } }}>
+          <Stack
+            direction="row"
+            spacing={3.5}
+            sx={{ display: { xs: "none", md: "flex" } }}
+          >
             {NAV_LINKS.map((link) => (
-              <Typography
+              <Stack
                 key={link}
-                variant="body2"
-                fontWeight={600}
-                color="#222"
-                sx={{ cursor: "pointer", "&:hover": { color: "#c41230" }, transition: "color 0.15s" }}
+                direction="row"
+                alignItems="center"
+                spacing={0.3}
+                sx={{ cursor: "pointer", "&:hover .nav-text": { color: "#c41230" } }}
               >
-                {link}
-              </Typography>
+                <Typography
+                  className="nav-text"
+                  variant="body2"
+                  fontWeight={600}
+                  color="#222"
+                  sx={{ transition: "color 0.15s" }}
+                >
+                  {link}
+                </Typography>
+                <ChevronDown size={14} color="#444" />
+              </Stack>
             ))}
           </Stack>
         </Stack>
 
-        {/* Right: search + sign in */}
-        <Stack direction="row" alignItems="center" spacing={2}>
-          <Search size={20} color="#444" style={{ cursor: "pointer" }} />
+        <Stack direction="row" alignItems="center" spacing={2.5}>
+          <Search size={20} color="#333" style={{ cursor: "pointer" }} />
           <Typography
             variant="body2"
             fontWeight={700}
@@ -79,9 +123,10 @@ const LoginScreen = () => {
         </Stack>
       </Box>
 
-      {/* ── HERO ───────────────────────────────────────────────── */}
+      {/* ── HERO ───────────────────────────────────── */}
       <Box sx={{ position: "relative", flex: 1, display: "flex", flexDirection: "column" }}>
-        {/* Background photo */}
+
+        {/* Background image — very subtle texture */}
         <Box
           sx={{
             position: "absolute",
@@ -89,18 +134,31 @@ const LoginScreen = () => {
             backgroundImage: `url(${BackgroundImage})`,
             backgroundSize: "cover",
             backgroundPosition: "center right",
+            opacity: 0.18,
           }}
         />
-        {/* Left gradient overlay */}
+
+        {/* Strong dark base so image stays as texture only */}
         <Box
           sx={{
             position: "absolute",
             inset: 0,
-            background: "linear-gradient(to right, rgba(12,12,30,0.88) 38%, rgba(12,12,30,0.3) 70%, transparent 100%)",
+            background:
+              "linear-gradient(108deg, #0d0b1f 0%, #131030 45%, #1c1640 75%, #0d0b1f 100%)",
           }}
         />
 
-        {/* Hero text + CTAs */}
+        {/* Subtle left-to-right colour fade for depth */}
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "linear-gradient(90deg, rgba(6,4,18,0.7) 0%, transparent 55%)",
+          }}
+        />
+
+        {/* Hero text + CTAs — left side */}
         <Box
           sx={{
             position: "relative",
@@ -109,185 +167,160 @@ const LoginScreen = () => {
             display: "flex",
             flexDirection: "column",
             justifyContent: "center",
-            px: { xs: 3, md: 7 },
-            maxWidth: 680,
+            pl: { xs: 3, md: 7 },
+            pr: { xs: 3, md: "52%" },
+            pb: "100px",
           }}
         >
-          <motion.div initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <Typography
-              variant="h2"
-              fontWeight={900}
-              color="white"
-              sx={{ fontSize: { xs: "2rem", md: "3.5rem" }, lineHeight: 1.1, mb: 2 }}
-            >
-              Manage users with confidence and speed
-            </Typography>
-            <Typography
-              variant="body1"
-              color="rgba(255,255,255,0.75)"
-              sx={{ mb: 5, maxWidth: 480, fontSize: "1.05rem", lineHeight: 1.6 }}
-            >
-              A full-stack demo integrating Ballerina REST APIs, secured by
-              Asgardeo identity, and deployed on Choreo.
-            </Typography>
+          {/* Headline */}
+          <Typography
+            fontWeight={900}
+            color="white"
+            sx={{
+              fontSize: { xs: "2.4rem", sm: "3.4rem", md: "4.4rem" },
+              lineHeight: 1.06,
+              mb: 2.5,
+              letterSpacing: "-1px",
+            }}
+          >
+            Manage users with<br />total confidence
+          </Typography>
 
-            {/* CTA columns */}
-            <Stack direction={{ xs: "column", sm: "row" }} alignItems="flex-start" spacing={0}>
-              {/* FOR DEVELOPERS */}
-              <Box sx={{ pr: { sm: 5 } }}>
-                <Typography
-                  variant="overline"
-                  color="rgba(255,255,255,0.5)"
-                  fontWeight={700}
-                  letterSpacing={2.5}
-                  display="block"
-                  mb={1.5}
-                  fontSize="0.68rem"
-                >
-                  For Developers
-                </Typography>
-                <Button
-                  variant="outlined"
-                  startIcon={<BookOpen size={16} />}
-                  onClick={handleSignIn}
-                  sx={{
-                    color: "white",
-                    borderColor: "rgba(255,255,255,0.6)",
-                    borderRadius: 1,
-                    px: 3,
-                    py: 1.1,
-                    fontWeight: 700,
-                    fontSize: "0.9rem",
-                    textTransform: "none",
-                    "&:hover": { bgcolor: "rgba(255,255,255,0.1)", borderColor: "white" },
-                  }}
-                >
-                  Explore the API
-                </Button>
-              </Box>
+          {/* Subtitle */}
+          <Typography
+            variant="body1"
+            color="rgba(255,255,255,0.78)"
+            sx={{ mb: 4.5, fontSize: "1.05rem", lineHeight: 1.7, maxWidth: 480 }}
+          >
+            A full-stack demo powered by Ballerina, secured by Asgardeo, and
+            deployed on Choreo — explore the Users API in action.
+          </Typography>
 
-              {/* Divider */}
-              <Divider
-                orientation="vertical"
-                flexItem
-                sx={{ borderColor: "rgba(255,255,255,0.2)", mx: 2, display: { xs: "none", sm: "block" }, my: 0.5 }}
-              />
+          {/* CTA columns */}
+          <Stack direction={{ xs: "column", sm: "row" }} alignItems="flex-start" spacing={0}>
 
-              {/* FOR ADMINS */}
-              <Box sx={{ pl: { sm: 3 }, pt: { xs: 3, sm: 0 } }}>
-                <Typography
-                  variant="overline"
-                  color="rgba(255,255,255,0.5)"
-                  fontWeight={700}
-                  letterSpacing={2.5}
-                  display="block"
-                  mb={1.5}
-                  fontSize="0.68rem"
-                >
-                  For Admins
-                </Typography>
-                <Stack direction="row" spacing={1.5}>
-                  <Button
-                    variant="outlined"
-                    startIcon={<Users size={16} />}
-                    onClick={handleSignIn}
-                    sx={{
-                      color: "white",
-                      borderColor: "rgba(255,255,255,0.6)",
-                      borderRadius: 1,
-                      px: 3,
-                      py: 1.1,
-                      fontWeight: 700,
-                      fontSize: "0.9rem",
-                      textTransform: "none",
-                      "&:hover": { bgcolor: "rgba(255,255,255,0.1)", borderColor: "white" },
-                    }}
-                  >
-                    Manage Users
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    startIcon={<Settings size={16} />}
-                    onClick={handleSignIn}
-                    sx={{
-                      color: "white",
-                      borderColor: "rgba(255,255,255,0.6)",
-                      borderRadius: 1,
-                      px: 3,
-                      py: 1.1,
-                      fontWeight: 700,
-                      fontSize: "0.9rem",
-                      textTransform: "none",
-                      "&:hover": { bgcolor: "rgba(255,255,255,0.1)", borderColor: "white" },
-                    }}
-                  >
-                    View Settings
-                  </Button>
-                </Stack>
-              </Box>
-            </Stack>
-          </motion.div>
+            {/* FOR DEVELOPERS */}
+            <Box>
+              <Typography
+                variant="overline"
+                color="rgba(255,255,255,0.55)"
+                fontWeight={700}
+                letterSpacing={2}
+                display="block"
+                mb={1.5}
+                fontSize="0.68rem"
+              >
+                For Developers
+              </Typography>
+              <OutlineHeroBtn onClick={handleSignIn}>
+                Explore the API
+              </OutlineHeroBtn>
+            </Box>
+
+            {/* Vertical divider */}
+            <Divider
+              orientation="vertical"
+              flexItem
+              sx={{
+                borderColor: "rgba(255,255,255,0.25)",
+                mx: 4,
+                mt: "28px",
+                display: { xs: "none", sm: "block" },
+              }}
+            />
+
+            {/* FOR ADMINS */}
+            <Box sx={{ pt: { xs: 3, sm: 0 } }}>
+              <Typography
+                variant="overline"
+                color="rgba(255,255,255,0.55)"
+                fontWeight={700}
+                letterSpacing={2}
+                display="block"
+                mb={1.5}
+                fontSize="0.68rem"
+              >
+                For Admins
+              </Typography>
+              <Stack spacing={1.5}>
+                <OutlineHeroBtn onClick={handleSignIn}>
+                  Manage Users
+                </OutlineHeroBtn>
+                <OutlineHeroBtn onClick={handleSignIn}>
+                  View Settings
+                </OutlineHeroBtn>
+              </Stack>
+            </Box>
+          </Stack>
         </Box>
 
-        {/* ── BOTTOM SEARCH PANEL ──────────────────────────────── */}
-        <Box sx={{ position: "relative", zIndex: 2, px: { xs: 2, md: 6 }, pb: 0 }}>
+        {/* ── BOTTOM SEARCH PANEL ─────────────────── */}
+        <Box
+          sx={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 3,
+          }}
+        >
           <Paper
-            elevation={4}
+            elevation={8}
             sx={{
-              borderRadius: "12px 12px 0 0",
-              px: { xs: 2, md: 4 },
-              py: 2.5,
+              borderRadius: 0,
+              px: { xs: 3, md: 7 },
+              py: 3,
               display: "flex",
               alignItems: "center",
-              gap: 0,
+              gap: 1,
               flexWrap: { xs: "wrap", md: "nowrap" },
             }}
           >
-            {/* User ID / Name field */}
-            <Box sx={{ flex: 1, minWidth: 200, px: 2 }}>
+            {/* Search input */}
+            <Box sx={{ flex: 2, minWidth: 200, px: 1 }}>
               <InputBase
-                placeholder="User Name or ID"
+                placeholder="User Name, ID or Role"
                 startAdornment={
                   <InputAdornment position="start">
-                    <Search size={18} color="#888" />
+                    <Search size={18} color="#999" />
                   </InputAdornment>
                 }
                 sx={{ width: "100%", fontSize: "0.95rem" }}
               />
             </Box>
 
-            <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
+            <Divider orientation="vertical" flexItem />
 
-            {/* Role / Location field */}
-            <Box sx={{ flex: 1, minWidth: 160, px: 2 }}>
+            {/* Location-style input */}
+            <Box sx={{ flex: 1, minWidth: 150, px: 1 }}>
               <InputBase
-                placeholder="Role or Department"
+                placeholder="Department or Role"
                 startAdornment={
                   <InputAdornment position="start">
-                    <MapPin size={18} color="#888" />
+                    <MapPin size={18} color="#999" />
                   </InputAdornment>
                 }
                 sx={{ width: "100%", fontSize: "0.95rem" }}
               />
             </Box>
 
-            {/* Search button */}
+            {/* CTA button */}
             <Button
               variant="contained"
               size="large"
               onClick={handleSignIn}
               sx={{
                 bgcolor: "#c41230",
-                borderRadius: 1.5,
+                borderRadius: 1,
                 px: 4,
-                py: 1.4,
+                py: 1.5,
                 fontWeight: 700,
                 fontSize: "0.95rem",
                 textTransform: "none",
-                whiteSpace: "nowrap",
-                ml: { xs: 0, md: 2 },
-                mt: { xs: 1.5, md: 0 },
+                flexShrink: 0,
+                ml: 1,
                 width: { xs: "100%", md: "auto" },
+                mt: { xs: 1.5, md: 0 },
                 "&:hover": { bgcolor: "#a00f26" },
               }}
             >
