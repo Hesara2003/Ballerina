@@ -1,7 +1,7 @@
 schemaVersion: "1.2"
 endpoints:
-  - name: frontend
-    displayName: frontend
+  - name: webapp
+    displayName: webapp
     service:
       basePath: /
       port: 8080
