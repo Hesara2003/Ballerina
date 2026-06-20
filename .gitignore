@@ -16,4 +16,9 @@ frontend/dist/
 frontend/build/
 frontend/.env
 frontend/.env.local
+
+# Webapp
+webapp/node_modules/
+webapp/build/
+webapp/public/config.js
 .claude/
