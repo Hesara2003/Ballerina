@@ -1,140 +1,301 @@
-// Copyright (c) 2025 WSO2 LLC. (https://www.wso2.com).
-//
-// WSO2 LLC. licenses this file to you under the Apache License,
-// Version 2.0 (the "License"); you may not use this file except
-// in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing,
-// software distributed under the License is distributed on an
-// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-// KIND, either express or implied.  See the License for the
-// specific language governing permissions and limitations
-// under the License.
-
-import Grid from "@mui/material/Grid";
-import Typography from "@mui/material/Typography";
 import {
   Box,
-  Container,
-  Card,
-  CardContent,
+  Button,
   Divider,
+  InputAdornment,
+  InputBase,
+  Paper,
   Stack,
+  Typography,
 } from "@mui/material";
-import BackgroundImage from "@src/assets/images/app-login-background.png";
-import ProductLogos from "@src/assets/images/app-login-logos.png";
-import LoadingButton from "@mui/lab/LoadingButton";
-import logo from "@src/assets/images/wso2-logo-black.png";
-import { APP_NAME } from "@root/src/config/config";
-import { APP_DESC } from "@root/src/config/constant";
-import { useAppAuthContext } from "@root/src/context/AuthContext";
+import { motion } from "framer-motion";
+import { BookOpen, MapPin, Search, Settings, Users } from "lucide-react";
+
+import BackgroundImage from "@assets/images/app-login-background.png";
+import { APP_NAME } from "@config/config";
+import { useAppAuthContext } from "@context/AuthContext";
+
+const NAV_LINKS = ["Users API", "Documentation", "Integrations", "About"];
 
 const LoginScreen = () => {
   const { appSignIn, appSignOut } = useAppAuthContext();
 
+  const handleSignIn = () => {
+    appSignOut();
+    appSignIn();
+  };
+
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        width: "100vw",
-        height: "100vh",
-        justifyContent: "center",
-        backgroundImage: `url(${BackgroundImage})`,
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "center",
-      }}
-    >
-      <Container fixed maxWidth="xs">
-        <Card
-          elevation={24}
+    <Box sx={{ width: "100vw", height: "100vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+
+      {/* ── NAVBAR ─────────────────────────────────────────────── */}
+      <Box
+        component="nav"
+        sx={{
+          position: "relative",
+          zIndex: 10,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          px: { xs: 3, md: 6 },
+          py: 0,
+          height: 60,
+          bgcolor: "white",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
+        }}
+      >
+        {/* Logo + Nav links */}
+        <Stack direction="row" alignItems="center" spacing={4}>
+          <Typography variant="h6" fontWeight={900} color="#c41230" letterSpacing={-0.5}>
+            {APP_NAME}
+          </Typography>
+          <Stack direction="row" spacing={3} sx={{ display: { xs: "none", md: "flex" } }}>
+            {NAV_LINKS.map((link) => (
+              <Typography
+                key={link}
+                variant="body2"
+                fontWeight={600}
+                color="#222"
+                sx={{ cursor: "pointer", "&:hover": { color: "#c41230" }, transition: "color 0.15s" }}
+              >
+                {link}
+              </Typography>
+            ))}
+          </Stack>
+        </Stack>
+
+        {/* Right: search + sign in */}
+        <Stack direction="row" alignItems="center" spacing={2}>
+          <Search size={20} color="#444" style={{ cursor: "pointer" }} />
+          <Typography
+            variant="body2"
+            fontWeight={700}
+            color="#c41230"
+            sx={{ cursor: "pointer", "&:hover": { textDecoration: "underline" } }}
+            onClick={handleSignIn}
+          >
+            Sign in
+          </Typography>
+        </Stack>
+      </Box>
+
+      {/* ── HERO ───────────────────────────────────────────────── */}
+      <Box sx={{ position: "relative", flex: 1, display: "flex", flexDirection: "column" }}>
+        {/* Background photo */}
+        <Box
           sx={{
-            borderRadius: 3,
-            pt: 3,
-            mx: 1,
-            backgroundColor: "white",
+            position: "absolute",
+            inset: 0,
+            backgroundImage: `url(${BackgroundImage})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center right",
+          }}
+        />
+        {/* Left gradient overlay */}
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            background: "linear-gradient(to right, rgba(12,12,30,0.88) 38%, rgba(12,12,30,0.3) 70%, transparent 100%)",
+          }}
+        />
+
+        {/* Hero text + CTAs */}
+        <Box
+          sx={{
+            position: "relative",
+            zIndex: 2,
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            px: { xs: 3, md: 7 },
+            maxWidth: 680,
           }}
         >
-          <CardContent>
-            <Box
-              sx={{
-                px: 1,
-                backgroundColor: "white",
-              }}
+          <motion.div initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+            <Typography
+              variant="h2"
+              fontWeight={900}
+              color="white"
+              sx={{ fontSize: { xs: "2rem", md: "3.5rem" }, lineHeight: 1.1, mb: 2 }}
             >
-              <Grid
-                container
-                direction="column"
-                justifyContent="center"
-                alignItems="center"
-                spacing={2}
-                p={1}
-              >
-                <Grid size={{ xs: 12 }}>
-                  <img alt="logo" width="130" height="auto" src={logo}></img>
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <Typography
-                    align="center"
-                    sx={{ fontWeight: "bold" }}
-                    variant="h5"
-                    color={"black"}
-                  >
-                    {APP_NAME}
-                  </Typography>
-                </Grid>
-                <Grid size={{ xs: 12 }} sx={{ pb: 2 }}>
-                  <Typography
-                    align="center"
-                    sx={{ fontSize: "1em" }}
-                    color={"black"}
-                    fontWeight={"400"}
-                  >
-                    {APP_DESC}
-                  </Typography>
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <LoadingButton
-                    variant="contained"
-                    color="primary"
-                    sx={{ fontWeight: "bold" }}
-                    onClick={() => {
-                      appSignOut();
+              Manage users with confidence and speed
+            </Typography>
+            <Typography
+              variant="body1"
+              color="rgba(255,255,255,0.75)"
+              sx={{ mb: 5, maxWidth: 480, fontSize: "1.05rem", lineHeight: 1.6 }}
+            >
+              A full-stack demo integrating Ballerina REST APIs, secured by
+              Asgardeo identity, and deployed on Choreo.
+            </Typography>
 
-                      appSignIn();
+            {/* CTA columns */}
+            <Stack direction={{ xs: "column", sm: "row" }} alignItems="flex-start" spacing={0}>
+              {/* FOR DEVELOPERS */}
+              <Box sx={{ pr: { sm: 5 } }}>
+                <Typography
+                  variant="overline"
+                  color="rgba(255,255,255,0.5)"
+                  fontWeight={700}
+                  letterSpacing={2.5}
+                  display="block"
+                  mb={1.5}
+                  fontSize="0.68rem"
+                >
+                  For Developers
+                </Typography>
+                <Button
+                  variant="outlined"
+                  startIcon={<BookOpen size={16} />}
+                  onClick={handleSignIn}
+                  sx={{
+                    color: "white",
+                    borderColor: "rgba(255,255,255,0.6)",
+                    borderRadius: 1,
+                    px: 3,
+                    py: 1.1,
+                    fontWeight: 700,
+                    fontSize: "0.9rem",
+                    textTransform: "none",
+                    "&:hover": { bgcolor: "rgba(255,255,255,0.1)", borderColor: "white" },
+                  }}
+                >
+                  Explore the API
+                </Button>
+              </Box>
+
+              {/* Divider */}
+              <Divider
+                orientation="vertical"
+                flexItem
+                sx={{ borderColor: "rgba(255,255,255,0.2)", mx: 2, display: { xs: "none", sm: "block" }, my: 0.5 }}
+              />
+
+              {/* FOR ADMINS */}
+              <Box sx={{ pl: { sm: 3 }, pt: { xs: 3, sm: 0 } }}>
+                <Typography
+                  variant="overline"
+                  color="rgba(255,255,255,0.5)"
+                  fontWeight={700}
+                  letterSpacing={2.5}
+                  display="block"
+                  mb={1.5}
+                  fontSize="0.68rem"
+                >
+                  For Admins
+                </Typography>
+                <Stack direction="row" spacing={1.5}>
+                  <Button
+                    variant="outlined"
+                    startIcon={<Users size={16} />}
+                    onClick={handleSignIn}
+                    sx={{
+                      color: "white",
+                      borderColor: "rgba(255,255,255,0.6)",
+                      borderRadius: 1,
+                      px: 3,
+                      py: 1.1,
+                      fontWeight: 700,
+                      fontSize: "0.9rem",
+                      textTransform: "none",
+                      "&:hover": { bgcolor: "rgba(255,255,255,0.1)", borderColor: "white" },
                     }}
                   >
-                    LOG IN
-                  </LoadingButton>
-                </Grid>
-                <Grid size={{ xs: 12 }} mt={6}>
-                  <Stack direction="column" spacing={2}>
-                    <Typography align="center" color={"black"}>
-                      Powered By
-                    </Typography>
-                    <Stack direction="row" spacing={2}>
-                      <img height={22} alt="Product logos" src={ProductLogos} />
-                    </Stack>
-                  </Stack>
-                </Grid>
-                <Grid size={{ xs: 12 }} mt={3}>
-                  <Typography
-                    align="center"
-                    color={"grey"}
-                    sx={{ fontSize: "0.8em" }}
+                    Manage Users
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<Settings size={16} />}
+                    onClick={handleSignIn}
+                    sx={{
+                      color: "white",
+                      borderColor: "rgba(255,255,255,0.6)",
+                      borderRadius: 1,
+                      px: 3,
+                      py: 1.1,
+                      fontWeight: 700,
+                      fontSize: "0.9rem",
+                      textTransform: "none",
+                      "&:hover": { bgcolor: "rgba(255,255,255,0.1)", borderColor: "white" },
+                    }}
                   >
-                    {/* {`© ${format(new Date(), "yyyy")} WSO2 LLC`} */}
-                  </Typography>
-                </Grid>
-              </Grid>
+                    View Settings
+                  </Button>
+                </Stack>
+              </Box>
+            </Stack>
+          </motion.div>
+        </Box>
+
+        {/* ── BOTTOM SEARCH PANEL ──────────────────────────────── */}
+        <Box sx={{ position: "relative", zIndex: 2, px: { xs: 2, md: 6 }, pb: 0 }}>
+          <Paper
+            elevation={4}
+            sx={{
+              borderRadius: "12px 12px 0 0",
+              px: { xs: 2, md: 4 },
+              py: 2.5,
+              display: "flex",
+              alignItems: "center",
+              gap: 0,
+              flexWrap: { xs: "wrap", md: "nowrap" },
+            }}
+          >
+            {/* User ID / Name field */}
+            <Box sx={{ flex: 1, minWidth: 200, px: 2 }}>
+              <InputBase
+                placeholder="User Name or ID"
+                startAdornment={
+                  <InputAdornment position="start">
+                    <Search size={18} color="#888" />
+                  </InputAdornment>
+                }
+                sx={{ width: "100%", fontSize: "0.95rem" }}
+              />
             </Box>
-          </CardContent>
-          <Divider />
-        </Card>
-      </Container>
+
+            <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
+
+            {/* Role / Location field */}
+            <Box sx={{ flex: 1, minWidth: 160, px: 2 }}>
+              <InputBase
+                placeholder="Role or Department"
+                startAdornment={
+                  <InputAdornment position="start">
+                    <MapPin size={18} color="#888" />
+                  </InputAdornment>
+                }
+                sx={{ width: "100%", fontSize: "0.95rem" }}
+              />
+            </Box>
+
+            {/* Search button */}
+            <Button
+              variant="contained"
+              size="large"
+              onClick={handleSignIn}
+              sx={{
+                bgcolor: "#c41230",
+                borderRadius: 1.5,
+                px: 4,
+                py: 1.4,
+                fontWeight: 700,
+                fontSize: "0.95rem",
+                textTransform: "none",
+                whiteSpace: "nowrap",
+                ml: { xs: 0, md: 2 },
+                mt: { xs: 1.5, md: 0 },
+                width: { xs: "100%", md: "auto" },
+                "&:hover": { bgcolor: "#a00f26" },
+              }}
+            >
+              Search Users
+            </Button>
+          </Paper>
+        </Box>
+      </Box>
     </Box>
   );
 };

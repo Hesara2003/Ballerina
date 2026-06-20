@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import { SecureApp, useAuthContext } from "@asgardeo/auth-react";
+import { useAuthContext } from "@asgardeo/auth-react";
 import { useIdleTimer } from "react-idle-timer";
 
 import React, { useContext, useEffect, useState } from "react";
@@ -204,10 +204,7 @@ const AppAuthProvider = (props: { children: React.ReactNode }) => {
         handleContinue={handleContinue}
         appSignOut={appSignOut}
       />
-
-      <SecureApp fallback={<PreLoader isLoading message="We are getting things ready ..." />}>
-        {renderContent()}
-      </SecureApp>
+      {renderContent()}
     </>
   );
 };
