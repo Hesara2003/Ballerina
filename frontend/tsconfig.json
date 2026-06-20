@@ -40,6 +40,7 @@
       "@slices/*": ["./src/slices/*"],
       "@view/*": ["./src/view/*"],
       "@utils/*": ["./src/utils/*"],
+      "@services/*": ["./src/services/*"],
       "@/types/*": ["./src/types/*"]
     },
     "types": ["vite/client"]

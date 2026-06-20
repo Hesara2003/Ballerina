@@ -45,9 +45,17 @@ export const ServiceBaseUrl = window.config?.REACT_APP_BACKEND_BASE_URL ?? "";
 
 export const AppConfig = {
   serviceUrls: {
-    addUser: ServiceBaseUrl + "/users/addUser",
-    getUser: ServiceBaseUrl + "/users/getUser",
-    deleteUser: ServiceBaseUrl + "/users/deleteUser",
-    updateUser: ServiceBaseUrl + "/users/updateUser",
+    // Access Request Portal
+    profile: ServiceBaseUrl + "/profile",
+    systems: ServiceBaseUrl + "/systems",
+    requests: ServiceBaseUrl + "/requests",
+    approveRequest: (id: string) => `${ServiceBaseUrl}/requests/${id}/approve`,
+    rejectRequest: (id: string) => `${ServiceBaseUrl}/requests/${id}/reject`,
+
+    // Legacy stubs (kept to avoid compile errors in template slices)
+    userInfo: ServiceBaseUrl + "/profile",
+    collections: ServiceBaseUrl + "/collections",
+    appConfig: ServiceBaseUrl + "/app-config",
+    employees: ServiceBaseUrl + "/employees",
   },
 };

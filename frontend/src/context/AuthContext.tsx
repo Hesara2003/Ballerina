@@ -23,9 +23,8 @@ import PreLoader from "@component/common/PreLoader";
 import SessionWarningDialog from "@component/common/SessionWarningDialog";
 import LoginScreen from "@component/ui/LoginScreen";
 import { redirectUrl } from "@config/constant";
-import { loadPrivileges, setAuthError, setUserAuthData } from "@slices/authSlice/auth";
+import { Role, setAuthError, setRoles, setUserAuthData } from "@slices/authSlice/auth";
 import { useAppDispatch } from "@slices/store";
-import { getUserInfo } from "@slices/userSlice/user";
 import { APIService } from "@utils/apiService";
 
 type AuthContextType = {
@@ -94,17 +93,17 @@ const AppAuthProvider = (props: { children: React.ReactNode }) => {
       getDecodedIDToken(),
     ]);
 
-    dispatch(
-      setUserAuthData({
-        userInfo: userInfo,
-        decodedIdToken: decodedIdToken,
-      }),
-    );
-
+    dispatch(setUserAuthData({ userInfo, decodedIdToken }));
     new APIService(idToken, refreshToken);
 
-    await dispatch(getUserInfo());
-    await dispatch(loadPrivileges());
+    // Derive role from Asgardeo JWT groups claim.
+    // Add user to the "manager" group in Asgardeo to grant approver access.
+    const groups: string[] = (decodedIdToken as { groups?: string[] }).groups ?? [];
+    const roles: Role[] = [Role.EMPLOYEE];
+    if (groups.some((g) => g.toLowerCase().includes("manager") || g.toLowerCase().includes("admin"))) {
+      roles.push(Role.ADMIN);
+    }
+    dispatch(setRoles(roles));
   };
 
   useEffect(() => {

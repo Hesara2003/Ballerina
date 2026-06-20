@@ -118,6 +118,10 @@ export const authSlice = createSlice({
       state.decodedIdToken = action.payload.decodedIdToken;
       state.status = State.success;
     },
+    setRoles: (state, action: PayloadAction<Role[]>) => {
+      state.roles = action.payload;
+      state.status = State.success;
+    },
     setAuthError: (state) => {
       state.status = State.failed;
       state.userInfo = null;
@@ -141,6 +145,6 @@ export const authSlice = createSlice({
   },
 });
 
-export const { setUserAuthData, setAuthError } = authSlice.actions;
+export const { setUserAuthData, setAuthError, setRoles } = authSlice.actions;
 export const selectRoles = (state: RootState) => state.auth.roles;
 export default authSlice.reducer;

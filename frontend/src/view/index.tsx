@@ -20,11 +20,15 @@ const nestedPage = lazy(() => import("@root/src/view/nested-page/NestedPage"));
 const firstView = lazy(() => import("@view/first-view/index"));
 const pageTwo = lazy(() => import("@view/page-two/PageTwo"));
 const home = lazy(() => import("@view/home/Home"));
+const employeeDashboard = lazy(() => import("@view/employee-dashboard/EmployeeDashboard"));
+const managerDashboard = lazy(() => import("@view/manager-dashboard/ManagerDashboard"));
 
 export const View = {
   help,
   nestedPage,
   firstView,
   pageTwo,
-  home
+  home,
+  employeeDashboard,
+  managerDashboard,
 };
