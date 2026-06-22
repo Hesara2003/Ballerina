@@ -20,10 +20,13 @@ configurable string dbUser = ?;
 configurable string dbPassword = ?;
 configurable string dbName = "access_portal";
 
-// Email (optional — leave empty to disable)
-configurable string smtpHost = "";
-configurable string smtpUser = "";
-configurable string smtpPassword = "";
+// Bird email (optional — leave empty to disable)
+// Get these from bird.com → Console → Developers / Channels
+configurable string birdApiKey = "";
+configurable string birdWorkspaceId = "";
+configurable string birdChannelId = "";
+configurable string senderEmail = "";
+configurable string senderName = "Access Request Portal";
 configurable string notificationEmail = "";
 
 // ── Types ───────────────────────────────────────────────────────────────────
