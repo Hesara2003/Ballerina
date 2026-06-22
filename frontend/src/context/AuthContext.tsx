@@ -97,21 +97,14 @@ const AppAuthProvider = (props: { children: React.ReactNode }) => {
     dispatch(setUserAuthData({ userInfo, decodedIdToken }));
     new APIService(idToken, refreshToken);
 
-    // Ask the backend — it checks JWT roles/groups AND the managerEmails config list
-    try {
-      const { data } = await APIService.getInstance().get(AppConfig.serviceUrls.profile);
-      const roles: Role[] = [Role.EMPLOYEE];
-      if (data?.isManager) roles.push(Role.ADMIN);
-      dispatch(setRoles(roles));
-    } catch {
-      // Fallback: derive from JWT groups claim if backend unreachable
-      const groups: string[] = (decodedIdToken as { groups?: string[] }).groups ?? [];
-      const roles: Role[] = [Role.EMPLOYEE];
-      if (groups.some((g) => g.toLowerCase().includes("manager") || g.toLowerCase().includes("admin"))) {
-        roles.push(Role.ADMIN);
-      }
-      dispatch(setRoles(roles));
+    // Set basic role immediately from JWT claims so the app can load.
+    // A second pass below re-checks once JWKS cache is warm.
+    const groups: string[] = (decodedIdToken as { groups?: string[] }).groups ?? [];
+    const roles: Role[] = [Role.EMPLOYEE];
+    if (groups.some((g) => g.toLowerCase().includes("manager") || g.toLowerCase().includes("admin"))) {
+      roles.push(Role.ADMIN);
     }
+    dispatch(setRoles(roles));
   };
 
   useEffect(() => {
@@ -147,6 +140,23 @@ const AppAuthProvider = (props: { children: React.ReactNode }) => {
       mounted = false;
     };
   }, [state.isAuthenticated, state.isLoading]);
+
+  // Second-pass role check: after the app is fully loaded the Ballerina JWKS
+  // cache is warm, so this call succeeds where the first-pass attempt would fail.
+  useEffect(() => {
+    if (appState !== AppState.Authenticated) return;
+
+    APIService.getInstance()
+      ?.get(AppConfig.serviceUrls.profile)
+      .then(({ data }) => {
+        const roles: Role[] = [Role.EMPLOYEE];
+        if (data?.isManager) roles.push(Role.ADMIN);
+        dispatch(setRoles(roles));
+      })
+      .catch(() => {
+        // Backend unreachable — keep whatever role was set from JWT claims
+      });
+  }, [appState]);
 
   const refreshToken = async (): Promise<{ accessToken: string }> => {  
     if (state.isAuthenticated) {
