@@ -237,33 +237,31 @@ function extractUserContext(http:Request req) returns UserContext|error {
     string userEmail = "";
     boolean isManager = false;
 
-    map<json>? claims = payload.customClaims;
-    if claims is map<json> {
-        json emailJson = claims["email"] ?: "";
-        json nameJson = claims["username"] ?: claims["preferred_username"] ?: "";
-        userEmail = emailJson.toString();
-        string nameStr = nameJson.toString();
-        if nameStr != "" {
-            userName = nameStr;
-        }
+    // jwt:Payload rest fields accessed via member access (not dot notation)
+    json emailJson = payload["email"] ?: "";
+    json nameJson = payload["username"] ?: payload["preferred_username"] ?: "";
+    userEmail = emailJson.toString();
+    string nameStr = nameJson.toString();
+    if nameStr != "" {
+        userName = nameStr;
+    }
 
-        json rolesJson = claims["roles"] ?: [];
-        if rolesJson is json[] {
-            foreach json role in rolesJson {
-                string roleStr = role.toString().toLowerAscii();
-                if roleStr == "manager" || roleStr == "admin" {
-                    isManager = true;
-                }
+    json rolesJson = payload["roles"] ?: [];
+    if rolesJson is json[] {
+        foreach json role in rolesJson {
+            string roleStr = role.toString().toLowerAscii();
+            if roleStr == "manager" || roleStr == "admin" {
+                isManager = true;
             }
         }
+    }
 
-        json groupsJson = claims["groups"] ?: [];
-        if !isManager && groupsJson is json[] {
-            foreach json grp in groupsJson {
-                string grpStr = grp.toString().toLowerAscii();
-                if grpStr.includes("manager") || grpStr.includes("admin") {
-                    isManager = true;
-                }
+    json groupsJson = payload["groups"] ?: [];
+    if !isManager && groupsJson is json[] {
+        foreach json grp in groupsJson {
+            string grpStr = grp.toString().toLowerAscii();
+            if grpStr.includes("manager") || grpStr.includes("admin") {
+                isManager = true;
             }
         }
     }
