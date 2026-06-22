@@ -133,12 +133,12 @@ export default function EmployeeDashboard() {
       <Typography variant="h6" fontWeight={700} mb={2}>
         Available Systems
       </Typography>
-      <Grid container spacing={2} mb={5}>
+      <Grid container spacing={2} mb={5} alignItems="stretch">
         {systems.map((sys) => {
           const hasPending = pendingSystemIds.has(sys.id);
           const hasAccess = approvedSystemIds.has(sys.id);
           return (
-            <Grid key={sys.id} size={{ xs: 12, sm: 6, md: 4 }}>
+            <Grid key={sys.id} size={{ xs: 12, sm: 6, md: 4 }} sx={{ display: "flex" }}>
               <Paper
                 elevation={0}
                 sx={{
@@ -146,7 +146,7 @@ export default function EmployeeDashboard() {
                   border: "1px solid",
                   borderColor: hasAccess ? "#6ee7b7" : hasPending ? "#fcd34d" : "#e5e7eb",
                   borderRadius: 3,
-                  height: "100%",
+                  width: "100%",
                   display: "flex",
                   flexDirection: "column",
                   gap: 1.5,

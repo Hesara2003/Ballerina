@@ -23,6 +23,7 @@ import PreLoader from "@component/common/PreLoader";
 import SessionWarningDialog from "@component/common/SessionWarningDialog";
 import LoginScreen from "@component/ui/LoginScreen";
 import { redirectUrl } from "@config/constant";
+import { AppConfig } from "@config/config";
 import { Role, setAuthError, setRoles, setUserAuthData } from "@slices/authSlice/auth";
 import { useAppDispatch } from "@slices/store";
 import { APIService } from "@utils/apiService";
@@ -96,14 +97,21 @@ const AppAuthProvider = (props: { children: React.ReactNode }) => {
     dispatch(setUserAuthData({ userInfo, decodedIdToken }));
     new APIService(idToken, refreshToken);
 
-    // Derive role from Asgardeo JWT groups claim.
-    // Add user to the "manager" group in Asgardeo to grant approver access.
-    const groups: string[] = (decodedIdToken as { groups?: string[] }).groups ?? [];
-    const roles: Role[] = [Role.EMPLOYEE];
-    if (groups.some((g) => g.toLowerCase().includes("manager") || g.toLowerCase().includes("admin"))) {
-      roles.push(Role.ADMIN);
+    // Ask the backend — it checks JWT roles/groups AND the managerEmails config list
+    try {
+      const { data } = await APIService.getInstance().get(AppConfig.serviceUrls.profile);
+      const roles: Role[] = [Role.EMPLOYEE];
+      if (data?.isManager) roles.push(Role.ADMIN);
+      dispatch(setRoles(roles));
+    } catch {
+      // Fallback: derive from JWT groups claim if backend unreachable
+      const groups: string[] = (decodedIdToken as { groups?: string[] }).groups ?? [];
+      const roles: Role[] = [Role.EMPLOYEE];
+      if (groups.some((g) => g.toLowerCase().includes("manager") || g.toLowerCase().includes("admin"))) {
+        roles.push(Role.ADMIN);
+      }
+      dispatch(setRoles(roles));
     }
-    dispatch(setRoles(roles));
   };
 
   useEffect(() => {
