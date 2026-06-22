@@ -7,6 +7,15 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
+    proxy: {
+      "/backend-api": {
+        target:
+          "https://21b6303d-55a8-42a9-b60f-a7f8c63d1ab1-dev.e1-us-east-azure.choreoapis.dev/test/backend/v1.0",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/backend-api/, ""),
+        secure: true,
+      },
+    },
   },
   build: {
     outDir: "build",

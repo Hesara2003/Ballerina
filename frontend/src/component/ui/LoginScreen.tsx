@@ -48,7 +48,6 @@ const LoginScreen = () => {
   const { appSignIn, appSignOut } = useAppAuthContext();
 
   const handleSignIn = () => {
-    appSignOut();
     appSignIn();
   };
 
