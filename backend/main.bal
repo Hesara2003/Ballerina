@@ -177,8 +177,16 @@ service / on new http:Listener(8080) {
         }
 
         AccessRequest updated = {
-            ...existing,
+            id: existing.id,
+            employeeId: existing.employeeId,
+            employeeName: existing.employeeName,
+            employeeEmail: existing.employeeEmail,
+            systemId: existing.systemId,
+            systemName: existing.systemName,
+            asgardeoGroupId: existing.asgardeoGroupId,
+            justification: existing.justification,
             status: "APPROVED",
+            requestedAt: existing.requestedAt,
             reviewedBy: ctx.userName,
             reviewedAt: time:utcToString(time:utcNow()),
             reviewComment: body.comment == "" ? () : body.comment
@@ -207,8 +215,16 @@ service / on new http:Listener(8080) {
         }
 
         AccessRequest updated = {
-            ...existing,
+            id: existing.id,
+            employeeId: existing.employeeId,
+            employeeName: existing.employeeName,
+            employeeEmail: existing.employeeEmail,
+            systemId: existing.systemId,
+            systemName: existing.systemName,
+            asgardeoGroupId: existing.asgardeoGroupId,
+            justification: existing.justification,
             status: "REJECTED",
+            requestedAt: existing.requestedAt,
             reviewedBy: ctx.userName,
             reviewedAt: time:utcToString(time:utcNow()),
             reviewComment: body.comment == "" ? () : body.comment
@@ -237,18 +253,18 @@ function extractUserContext(http:Request req) returns UserContext|error {
     string userEmail = "";
     boolean isManager = false;
 
-    // jwt:Payload rest fields accessed via member access (not dot notation)
-    json emailJson = payload["email"] ?: "";
-    json nameJson = payload["username"] ?: payload["preferred_username"] ?: "";
-    userEmail = emailJson.toString();
-    string nameStr = nameJson.toString();
+    // jwt:Payload rest fields return anydata in Ballerina 2201.x
+    anydata emailData = payload["email"] ?: "";
+    anydata nameData = payload["username"] ?: payload["preferred_username"] ?: "";
+    userEmail = emailData.toString();
+    string nameStr = nameData.toString();
     if nameStr != "" {
         userName = nameStr;
     }
 
-    json rolesJson = payload["roles"] ?: [];
-    if rolesJson is json[] {
-        foreach json role in rolesJson {
+    anydata rolesData = payload["roles"] ?: [];
+    if rolesData is anydata[] {
+        foreach anydata role in rolesData {
             string roleStr = role.toString().toLowerAscii();
             if roleStr == "manager" || roleStr == "admin" {
                 isManager = true;
@@ -256,9 +272,9 @@ function extractUserContext(http:Request req) returns UserContext|error {
         }
     }
 
-    json groupsJson = payload["groups"] ?: [];
-    if !isManager && groupsJson is json[] {
-        foreach json grp in groupsJson {
+    anydata groupsData = payload["groups"] ?: [];
+    if !isManager && groupsData is anydata[] {
+        foreach anydata grp in groupsData {
             string grpStr = grp.toString().toLowerAscii();
             if grpStr.includes("manager") || grpStr.includes("admin") {
                 isManager = true;
