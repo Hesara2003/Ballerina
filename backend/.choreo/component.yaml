@@ -1,11 +1,11 @@
 schemaVersion: "1.2"
 endpoints:
-  - name: users-api
-    displayName: users-api
-    service:
-      basePath: /users
-      port: 8080
-    type: REST
-    networkVisibilities:
-      - Public
-    schemaFilePath: openapi.yaml
+    - name: access-request-api
+      displayName: Access Request API
+      service:
+        basePath: /
+        port: 8080
+      type: REST
+      networkVisibilities:
+        - Public
+      schemaFilePath: openapi.yaml

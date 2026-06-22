@@ -13,7 +13,7 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-import { LayoutDashboard, ShieldCheck } from "lucide-react";
+import { BarChart3, LayoutDashboard, Settings, ShieldCheck, User } from "lucide-react";
 import type { RouteObject } from "react-router-dom";
 
 import React from "react";
@@ -38,6 +38,27 @@ export const routes: RouteObjectWithRole[] = [
     icon: React.createElement(ShieldCheck),
     element: React.createElement(View.managerDashboard),
     allowRoles: [Role.ADMIN],
+  },
+  {
+    path: "/analytics",
+    text: "Analytics",
+    icon: React.createElement(BarChart3),
+    element: React.createElement(View.analytics),
+    allowRoles: [Role.ADMIN],
+  },
+  {
+    path: "/admin",
+    text: "Admin",
+    icon: React.createElement(Settings),
+    element: React.createElement(View.adminPanel),
+    allowRoles: [Role.ADMIN],
+  },
+  {
+    path: "/profile",
+    text: "Profile",
+    icon: React.createElement(User),
+    element: React.createElement(View.profilePage),
+    allowRoles: [Role.ADMIN, Role.EMPLOYEE],
   },
 ];
 

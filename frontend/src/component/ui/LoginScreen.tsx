@@ -45,7 +45,7 @@ const OutlineHeroBtn = ({
 );
 
 const LoginScreen = () => {
-  const { appSignIn, appSignOut } = useAppAuthContext();
+  const { appSignIn } = useAppAuthContext();
 
   const handleSignIn = () => {
     appSignIn();

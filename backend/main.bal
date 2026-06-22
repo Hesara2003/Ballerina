@@ -4,6 +4,8 @@ import ballerina/log;
 import ballerina/time;
 import ballerina/uuid;
 
+// ── Config ─────────────────────────────────────────────────────────────────
+
 configurable string asgardeoOrg = "hesara";
 configurable string clientId = ?;
 configurable string clientSecret = ?;
@@ -11,7 +13,40 @@ configurable string mgmtClientId = "";
 configurable string mgmtClientSecret = "";
 configurable string[] managerEmails = [];
 
+// MySQL
+configurable string dbHost = "localhost";
+configurable int dbPort = 3306;
+configurable string dbUser = ?;
+configurable string dbPassword = ?;
+configurable string dbName = "access_portal";
+
+// Email (optional — leave empty to disable)
+configurable string smtpHost = "";
+configurable string smtpUser = "";
+configurable string smtpPassword = "";
+configurable string notificationEmail = "";
+
+// ── Types ───────────────────────────────────────────────────────────────────
+
 type SystemResource record {|
+    string id;
+    string name;
+    string description;
+    string category;
+    string asgardeoGroupId;
+|};
+
+type AdminSystem record {|
+    string id;
+    string name;
+    string description;
+    string category;
+    string asgardeoGroupId;
+    boolean isActive;
+    string createdAt;
+|};
+
+type SystemPayload record {|
     string id;
     string name;
     string description;
@@ -51,23 +86,45 @@ type UserContext record {|
     boolean isManager;
 |};
 
-map<AccessRequest> requestStore = {};
+type SystemStat record {|
+    string systemName;
+    int pending;
+    int approved;
+    int rejected;
+|};
 
-final SystemResource[] SYSTEMS = [
-    {id: "dev-tools", name: "Developer Tools", description: "GitHub, Jira, CI/CD pipelines and code review tools", category: "Engineering", asgardeoGroupId: "PLACEHOLDER_GROUP_DEV"},
-    {id: "hr-system", name: "HR System", description: "Employee records, payroll data and leave management", category: "Human Resources", asgardeoGroupId: "PLACEHOLDER_GROUP_HR"},
-    {id: "finance", name: "Finance System", description: "Financial reports, budgets and expense tracking", category: "Finance", asgardeoGroupId: "PLACEHOLDER_GROUP_FINANCE"},
-    {id: "crm", name: "CRM Platform", description: "Customer records, sales pipeline and client interactions", category: "Sales", asgardeoGroupId: "PLACEHOLDER_GROUP_CRM"},
-    {id: "analytics", name: "Analytics Dashboard", description: "Business intelligence, reporting and data visualisation", category: "Data", asgardeoGroupId: "PLACEHOLDER_GROUP_ANALYTICS"},
-    {id: "infra", name: "Cloud Infrastructure", description: "AWS/Azure console, Kubernetes and deployment access", category: "Engineering", asgardeoGroupId: "PLACEHOLDER_GROUP_INFRA"}
-];
+type DayStat record {|
+    string date;
+    int count;
+|};
+
+type AnalyticsResponse record {|
+    int total;
+    int pending;
+    int approved;
+    int rejected;
+    SystemStat[] bySystem;
+    DayStat[] recentActivity;
+|};
+
+type AuditEntry record {|
+    int id;
+    string action;
+    string performedBy;
+    string performedByEmail;
+    string? targetId;
+    string? details;
+    string createdAt;
+|};
+
+// ── Service ─────────────────────────────────────────────────────────────────
 
 @http:ServiceConfig {
     cors: {
         allowOrigins: ["http://localhost:3000"],
         allowCredentials: false,
         allowHeaders: ["Authorization", "Content-Type", "x-jwt-assertion"],
-        allowMethods: ["GET", "POST", "PUT", "OPTIONS"]
+        allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
     },
     auth: [
         {
@@ -85,37 +142,37 @@ final SystemResource[] SYSTEMS = [
 }
 service / on new http:Listener(8080) {
 
+    // ── Profile ──────────────────────────────────────────────────────────
+
     resource function get profile(http:Request req) returns json|http:InternalServerError {
         UserContext|error ctx = extractUserContext(req);
-        if ctx is error {
-            return <http:InternalServerError>{body: ctx.message()};
-        }
+        if ctx is error { return <http:InternalServerError>{body: ctx.message()}; }
         return {userId: ctx.userId, userName: ctx.userName, userEmail: ctx.userEmail, isManager: ctx.isManager};
     }
 
-    resource function get systems() returns SystemResource[] {
-        return SYSTEMS;
+    // ── Systems (employee read) ──────────────────────────────────────────
+
+    resource function get systems(http:Request req) returns SystemResource[]|http:InternalServerError {
+        SystemResource[]|error systems = dbGetSystems();
+        if systems is error { return <http:InternalServerError>{body: systems.message()}; }
+        return systems;
     }
+
+    // ── Requests ─────────────────────────────────────────────────────────
 
     resource function post requests(http:Request req, @http:Payload NewRequestPayload body)
             returns AccessRequest|http:BadRequest|http:NotFound|http:InternalServerError {
 
         UserContext|error ctx = extractUserContext(req);
-        if ctx is error {
-            return <http:InternalServerError>{body: ctx.message()};
-        }
+        if ctx is error { return <http:InternalServerError>{body: ctx.message()}; }
 
-        SystemResource? targetSystem = findSystem(body.systemId);
-        if targetSystem is () {
-            return <http:NotFound>{body: string `System '${body.systemId}' not found`};
-        }
+        SystemResource|error|() sys = dbFindSystem(body.systemId);
+        if sys is error { return <http:InternalServerError>{body: sys.message()}; }
+        if sys is () { return <http:NotFound>{body: string `System '${body.systemId}' not found`}; }
 
-        foreach string key in requestStore.keys() {
-            AccessRequest r = requestStore.get(key);
-            if r.employeeId == ctx.userId && r.systemId == body.systemId && r.status == "PENDING" {
-                return <http:BadRequest>{body: "You already have a pending request for this system"};
-            }
-        }
+        boolean|error hasPending = dbHasPendingRequest(ctx.userId, body.systemId);
+        if hasPending is error { return <http:InternalServerError>{body: hasPending.message()}; }
+        if hasPending { return <http:BadRequest>{body: "You already have a pending request for this system"}; }
 
         string id = uuid:createType4AsString();
         AccessRequest newReq = {
@@ -124,29 +181,27 @@ service / on new http:Listener(8080) {
             employeeName: ctx.userName,
             employeeEmail: ctx.userEmail,
             systemId: body.systemId,
-            systemName: targetSystem.name,
-            asgardeoGroupId: targetSystem.asgardeoGroupId,
+            systemName: sys.name,
+            asgardeoGroupId: sys.asgardeoGroupId,
             justification: body.justification,
             status: "PENDING",
             requestedAt: time:utcToString(time:utcNow())
         };
-        requestStore[id] = newReq;
+
+        error? saved = dbCreateRequest(newReq);
+        if saved is error { return <http:InternalServerError>{body: saved.message()}; }
+
+        dbLogAudit("REQUEST_SUBMITTED", ctx.userName, ctx.userEmail, id, string `${ctx.userName} requested access to ${sys.name}`);
+        notifyNewRequest(ctx.userName, sys.name, body.justification, id);
         return newReq;
     }
 
     resource function get requests(http:Request req) returns AccessRequest[]|http:InternalServerError {
         UserContext|error ctx = extractUserContext(req);
-        if ctx is error {
-            return <http:InternalServerError>{body: ctx.message()};
-        }
+        if ctx is error { return <http:InternalServerError>{body: ctx.message()}; }
 
-        AccessRequest[] result = [];
-        foreach string key in requestStore.keys() {
-            AccessRequest r = requestStore.get(key);
-            if ctx.isManager || r.employeeId == ctx.userId {
-                result.push(r);
-            }
-        }
+        AccessRequest[]|error result = dbGetRequests(ctx.userId, ctx.isManager);
+        if result is error { return <http:InternalServerError>{body: result.message()}; }
         return result;
     }
 
@@ -154,44 +209,26 @@ service / on new http:Listener(8080) {
             returns AccessRequest|http:NotFound|http:BadRequest|http:Forbidden|http:InternalServerError {
 
         UserContext|error ctx = extractUserContext(req);
-        if ctx is error {
-            return <http:InternalServerError>{body: ctx.message()};
-        }
-        if !ctx.isManager {
-            return <http:Forbidden>{body: "Only managers can approve requests"};
-        }
-        if !requestStore.hasKey(id) {
-            return <http:NotFound>{body: string `Request '${id}' not found`};
-        }
+        if ctx is error { return <http:InternalServerError>{body: ctx.message()}; }
+        if !ctx.isManager { return <http:Forbidden>{body: "Only managers can approve requests"}; }
 
-        AccessRequest existing = requestStore.get(id);
-        if existing.status != "PENDING" {
-            return <http:BadRequest>{body: "Request is not pending"};
-        }
+        AccessRequest|error|() existing = dbGetRequest(id);
+        if existing is error { return <http:InternalServerError>{body: existing.message()}; }
+        if existing is () { return <http:NotFound>{body: string `Request '${id}' not found`}; }
+        if existing.status != "PENDING" { return <http:BadRequest>{body: "Request is not pending"}; }
 
         if mgmtClientId != "" && mgmtClientSecret != "" {
             error? groupResult = addUserToAsgardeoGroup(existing.asgardeoGroupId, existing.employeeId);
-            if groupResult is error {
-                log:printWarn("Asgardeo group update skipped: " + groupResult.message());
-            }
+            if groupResult is error { log:printWarn("Asgardeo group update skipped: " + groupResult.message()); }
         }
 
-        AccessRequest updated = {
-            id: existing.id,
-            employeeId: existing.employeeId,
-            employeeName: existing.employeeName,
-            employeeEmail: existing.employeeEmail,
-            systemId: existing.systemId,
-            systemName: existing.systemName,
-            asgardeoGroupId: existing.asgardeoGroupId,
-            justification: existing.justification,
-            status: "APPROVED",
-            requestedAt: existing.requestedAt,
-            reviewedBy: ctx.userName,
-            reviewedAt: time:utcToString(time:utcNow()),
-            reviewComment: body.comment == "" ? () : body.comment
-        };
-        requestStore[id] = updated;
+        string now = time:utcToString(time:utcNow());
+        string? comment = body.comment == "" ? () : body.comment;
+        AccessRequest|error updated = dbUpdateRequestStatus(id, "APPROVED", ctx.userName, now, comment);
+        if updated is error { return <http:InternalServerError>{body: updated.message()}; }
+
+        dbLogAudit("REQUEST_APPROVED", ctx.userName, ctx.userEmail, id, string `${ctx.userName} approved access to ${existing.systemName} for ${existing.employeeName}`);
+        notifyRequestReviewed(existing.employeeEmail, existing.employeeName, existing.systemName, "APPROVED", comment);
         return updated;
     }
 
@@ -199,45 +236,130 @@ service / on new http:Listener(8080) {
             returns AccessRequest|http:NotFound|http:BadRequest|http:Forbidden|http:InternalServerError {
 
         UserContext|error ctx = extractUserContext(req);
-        if ctx is error {
-            return <http:InternalServerError>{body: ctx.message()};
-        }
-        if !ctx.isManager {
-            return <http:Forbidden>{body: "Only managers can reject requests"};
-        }
-        if !requestStore.hasKey(id) {
-            return <http:NotFound>{body: string `Request '${id}' not found`};
-        }
+        if ctx is error { return <http:InternalServerError>{body: ctx.message()}; }
+        if !ctx.isManager { return <http:Forbidden>{body: "Only managers can reject requests"}; }
 
-        AccessRequest existing = requestStore.get(id);
-        if existing.status != "PENDING" {
-            return <http:BadRequest>{body: "Request is not pending"};
-        }
+        AccessRequest|error|() existing = dbGetRequest(id);
+        if existing is error { return <http:InternalServerError>{body: existing.message()}; }
+        if existing is () { return <http:NotFound>{body: string `Request '${id}' not found`}; }
+        if existing.status != "PENDING" { return <http:BadRequest>{body: "Request is not pending"}; }
 
-        AccessRequest updated = {
-            id: existing.id,
-            employeeId: existing.employeeId,
-            employeeName: existing.employeeName,
-            employeeEmail: existing.employeeEmail,
-            systemId: existing.systemId,
-            systemName: existing.systemName,
-            asgardeoGroupId: existing.asgardeoGroupId,
-            justification: existing.justification,
-            status: "REJECTED",
-            requestedAt: existing.requestedAt,
-            reviewedBy: ctx.userName,
-            reviewedAt: time:utcToString(time:utcNow()),
-            reviewComment: body.comment == "" ? () : body.comment
-        };
-        requestStore[id] = updated;
+        string now = time:utcToString(time:utcNow());
+        string? comment = body.comment == "" ? () : body.comment;
+        AccessRequest|error updated = dbUpdateRequestStatus(id, "REJECTED", ctx.userName, now, comment);
+        if updated is error { return <http:InternalServerError>{body: updated.message()}; }
+
+        dbLogAudit("REQUEST_REJECTED", ctx.userName, ctx.userEmail, id, string `${ctx.userName} rejected access to ${existing.systemName} for ${existing.employeeName}`);
+        notifyRequestReviewed(existing.employeeEmail, existing.employeeName, existing.systemName, "REJECTED", comment);
         return updated;
+    }
+
+    // ── Analytics (manager only) ─────────────────────────────────────────
+
+    resource function get analytics(http:Request req) returns AnalyticsResponse|http:Forbidden|http:InternalServerError {
+        UserContext|error ctx = extractUserContext(req);
+        if ctx is error { return <http:InternalServerError>{body: ctx.message()}; }
+        if !ctx.isManager { return <http:Forbidden>{body: "Manager access required"}; }
+
+        AnalyticsResponse|error result = dbGetAnalytics();
+        if result is error { return <http:InternalServerError>{body: result.message()}; }
+        return result;
+    }
+
+    // ── Admin: systems management (manager only) ─────────────────────────
+
+    resource function get admin/systems(http:Request req) returns AdminSystem[]|http:Forbidden|http:InternalServerError {
+        UserContext|error ctx = extractUserContext(req);
+        if ctx is error { return <http:InternalServerError>{body: ctx.message()}; }
+        if !ctx.isManager { return <http:Forbidden>{body: "Manager access required"}; }
+
+        AdminSystem[]|error result = dbGetAdminSystems();
+        if result is error { return <http:InternalServerError>{body: result.message()}; }
+        return result;
+    }
+
+    resource function post admin/systems(http:Request req, @http:Payload SystemPayload body)
+            returns AdminSystem[]|http:Forbidden|http:BadRequest|http:InternalServerError {
+
+        UserContext|error ctx = extractUserContext(req);
+        if ctx is error { return <http:InternalServerError>{body: ctx.message()}; }
+        if !ctx.isManager { return <http:Forbidden>{body: "Manager access required"}; }
+        if body.id == "" || body.name == "" { return <http:BadRequest>{body: "id and name are required"}; }
+
+        error? result = dbCreateSystem(body.id, body.name, body.description, body.category, body.asgardeoGroupId);
+        if result is error { return <http:InternalServerError>{body: result.message()}; }
+
+        dbLogAudit("SYSTEM_CREATED", ctx.userName, ctx.userEmail, body.id, string `Created system: ${body.name}`);
+        AdminSystem[]|error systems = dbGetAdminSystems();
+        if systems is error { return <http:InternalServerError>{body: systems.message()}; }
+        return systems;
+    }
+
+    resource function put admin/systems/[string id](http:Request req, @http:Payload SystemPayload body)
+            returns AdminSystem[]|http:Forbidden|http:NotFound|http:InternalServerError {
+
+        UserContext|error ctx = extractUserContext(req);
+        if ctx is error { return <http:InternalServerError>{body: ctx.message()}; }
+        if !ctx.isManager { return <http:Forbidden>{body: "Manager access required"}; }
+
+        error? result = dbUpdateSystem(id, body.name, body.description, body.category, body.asgardeoGroupId);
+        if result is error { return <http:InternalServerError>{body: result.message()}; }
+
+        dbLogAudit("SYSTEM_UPDATED", ctx.userName, ctx.userEmail, id, string `Updated system: ${body.name}`);
+        AdminSystem[]|error systems = dbGetAdminSystems();
+        if systems is error { return <http:InternalServerError>{body: systems.message()}; }
+        return systems;
+    }
+
+    resource function delete admin/systems/[string id](http:Request req)
+            returns AdminSystem[]|http:Forbidden|http:InternalServerError {
+
+        UserContext|error ctx = extractUserContext(req);
+        if ctx is error { return <http:InternalServerError>{body: ctx.message()}; }
+        if !ctx.isManager { return <http:Forbidden>{body: "Manager access required"}; }
+
+        error? result = dbToggleSystem(id, false);
+        if result is error { return <http:InternalServerError>{body: result.message()}; }
+
+        dbLogAudit("SYSTEM_DEACTIVATED", ctx.userName, ctx.userEmail, id, string `Deactivated system: ${id}`);
+        AdminSystem[]|error systems = dbGetAdminSystems();
+        if systems is error { return <http:InternalServerError>{body: systems.message()}; }
+        return systems;
+    }
+
+    resource function put admin/systems/[string id]/activate(http:Request req)
+            returns AdminSystem[]|http:Forbidden|http:InternalServerError {
+
+        UserContext|error ctx = extractUserContext(req);
+        if ctx is error { return <http:InternalServerError>{body: ctx.message()}; }
+        if !ctx.isManager { return <http:Forbidden>{body: "Manager access required"}; }
+
+        error? result = dbToggleSystem(id, true);
+        if result is error { return <http:InternalServerError>{body: result.message()}; }
+
+        dbLogAudit("SYSTEM_ACTIVATED", ctx.userName, ctx.userEmail, id, string `Activated system: ${id}`);
+        AdminSystem[]|error systems = dbGetAdminSystems();
+        if systems is error { return <http:InternalServerError>{body: systems.message()}; }
+        return systems;
+    }
+
+    // ── Admin: audit log ─────────────────────────────────────────────────
+
+    resource function get admin/audit\-log(http:Request req) returns AuditEntry[]|http:Forbidden|http:InternalServerError {
+        UserContext|error ctx = extractUserContext(req);
+        if ctx is error { return <http:InternalServerError>{body: ctx.message()}; }
+        if !ctx.isManager { return <http:Forbidden>{body: "Manager access required"}; }
+
+        AuditEntry[]|error result = dbGetAuditLog(200);
+        if result is error { return <http:InternalServerError>{body: result.message()}; }
+        return result;
     }
 }
 
+// ── Helpers ─────────────────────────────────────────────────────────────────
+
 function extractUserContext(http:Request req) returns UserContext|error {
     string token = "";
-
-    // Choreo/WSO2 sends the JWT in x-jwt-assertion; fall back to Authorization header
     string|http:HeaderNotFoundError xjwt = req.getHeader("x-jwt-assertion");
     if xjwt is string {
         token = xjwt;
@@ -253,22 +375,17 @@ function extractUserContext(http:Request req) returns UserContext|error {
     string userEmail = "";
     boolean isManager = false;
 
-    // jwt:Payload rest fields return anydata in Ballerina 2201.x
     anydata emailData = payload["email"] ?: "";
     anydata nameData = payload["username"] ?: payload["preferred_username"] ?: "";
     userEmail = emailData.toString();
     string nameStr = nameData.toString();
-    if nameStr != "" {
-        userName = nameStr;
-    }
+    if nameStr != "" { userName = nameStr; }
 
     anydata rolesData = payload["roles"] ?: [];
     if rolesData is anydata[] {
         foreach anydata role in rolesData {
             string roleStr = role.toString().toLowerAscii();
-            if roleStr == "manager" || roleStr == "admin" {
-                isManager = true;
-            }
+            if roleStr == "manager" || roleStr == "admin" { isManager = true; }
         }
     }
 
@@ -276,35 +393,22 @@ function extractUserContext(http:Request req) returns UserContext|error {
     if !isManager && groupsData is anydata[] {
         foreach anydata grp in groupsData {
             string grpStr = grp.toString().toLowerAscii();
-            if grpStr.includes("manager") || grpStr.includes("admin") {
-                isManager = true;
-            }
+            if grpStr.includes("manager") || grpStr.includes("admin") { isManager = true; }
         }
     }
 
-    // Fallback: configurable manager email list
     if !isManager {
         foreach string email in managerEmails {
-            if email == userEmail {
-                isManager = true;
-                break;
-            }
+            if email == userEmail { isManager = true; break; }
         }
     }
 
     return {userId, userName, userEmail, isManager};
 }
 
-function findSystem(string systemId) returns SystemResource? {
-    foreach SystemResource sys in SYSTEMS {
-        if sys.id == systemId {
-            return sys;
-        }
-    }
-    return ();
-}
-
 function addUserToAsgardeoGroup(string groupId, string userId) returns error? {
+    if groupId.startsWith("PLACEHOLDER") { return; }
+
     http:Client tokenClient = check new(string `https://api.asgardeo.io/t/${asgardeoOrg}/oauth2/token`);
     http:Request tokenReq = new;
     tokenReq.setTextPayload(
@@ -313,8 +417,7 @@ function addUserToAsgardeoGroup(string groupId, string userId) returns error? {
     );
     http:Response tokenResp = check tokenClient->post("", tokenReq);
     json tokenBody = check tokenResp.getJsonPayload();
-    json accessTokenJson = check tokenBody.access_token;
-    string accessToken = accessTokenJson.toString();
+    string accessToken = (check tokenBody.access_token).toString();
 
     http:Client scimClient = check new(string `https://api.asgardeo.io/t/${asgardeoOrg}/scim2`);
     http:Request patchReq = new;

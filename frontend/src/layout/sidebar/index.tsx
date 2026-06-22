@@ -15,7 +15,6 @@
 // under the License.
 import { Box, Divider, Stack, Tooltip, Typography, useTheme } from "@mui/material";
 import { ChevronLeft, ChevronRight, Moon, Sun } from "lucide-react";
-import { matchPath, useLocation } from "react-router-dom";
 
 import { useMemo, useState } from "react";
 
@@ -34,7 +33,6 @@ interface SidebarProps {
 
 const Sidebar = (props: SidebarProps) => {
   const allRoutes = useMemo(() => getActiveRouteDetails(props.roles), [props.roles]);
-  const location = useLocation();
 
   // Single state object for nav state
   const [navState, setNavState] = useState<NavState>({

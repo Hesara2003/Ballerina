@@ -22,6 +22,9 @@ const pageTwo = lazy(() => import("@view/page-two/PageTwo"));
 const home = lazy(() => import("@view/home/Home"));
 const employeeDashboard = lazy(() => import("@view/employee-dashboard/EmployeeDashboard"));
 const managerDashboard = lazy(() => import("@view/manager-dashboard/ManagerDashboard"));
+const analytics = lazy(() => import("@view/analytics/Analytics"));
+const adminPanel = lazy(() => import("@view/admin/AdminPanel"));
+const profilePage = lazy(() => import("@view/profile/ProfilePage"));
 
 export const View = {
   help,
@@ -31,4 +34,7 @@ export const View = {
   home,
   employeeDashboard,
   managerDashboard,
+  analytics,
+  adminPanel,
+  profilePage,
 };

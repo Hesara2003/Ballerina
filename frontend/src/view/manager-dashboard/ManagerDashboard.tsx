@@ -17,7 +17,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { CheckCircle2, Clock, Users, XCircle } from "lucide-react";
+import { CheckCircle2, Clock, Search, Users, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import {
@@ -36,6 +36,7 @@ export default function ManagerDashboard() {
   const [success, setSuccess] = useState<string | null>(null);
 
   const [tab, setTab] = useState<TabValue>("PENDING");
+  const [search, setSearch] = useState("");
   const [reviewTarget, setReviewTarget] = useState<{ req: AccessRequest; action: "approve" | "reject" } | null>(null);
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -53,7 +54,13 @@ export default function ManagerDashboard() {
 
   useEffect(() => { load(); }, []);
 
-  const filtered = tab === "ALL" ? requests : requests.filter((r) => r.status === tab);
+  const filtered = requests
+    .filter((r) => tab === "ALL" || r.status === tab)
+    .filter((r) => {
+      if (!search) return true;
+      const q = search.toLowerCase();
+      return r.employeeName.toLowerCase().includes(q) || r.employeeEmail.toLowerCase().includes(q) || r.systemName.toLowerCase().includes(q);
+    });
 
   const counts = {
     PENDING: requests.filter((r) => r.status === "PENDING").length,
@@ -131,6 +138,16 @@ export default function ManagerDashboard() {
           </Paper>
         ))}
       </Stack>
+
+      {/* Search */}
+      <TextField
+        size="small"
+        placeholder="Search by name, email or system..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        sx={{ mb: 2, maxWidth: 400 }}
+        InputProps={{ startAdornment: <Search size={16} color="#9ca3af" style={{ marginRight: 6 }} /> }}
+      />
 
       {/* Tabs */}
       <Tabs

@@ -6,3 +6,13 @@ distribution = "2201.13.4"
 
 [build-options]
 observabilityIncluded = true
+
+[[dependency]]
+org = "ballerinax"
+name = "mysql"
+version = "1.14.0"
+
+[[platform.java17.dependency]]
+groupId = "com.mysql"
+artifactId = "mysql-connector-j"
+version = "8.3.0"
